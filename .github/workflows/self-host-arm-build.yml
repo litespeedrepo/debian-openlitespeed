@@ -1,0 +1,56 @@
+name: self-host-arm64-build
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'package name'
+        required: true
+        default: 'openlitespeed'
+        type: choice
+        options:
+          - '"openlitespeed"'
+      version:
+        description: 'version number'
+        type: number
+      revision:
+        description: 'revision number'
+        type: number        
+      distro:
+        description: 'distro'
+        required: true
+        default: 'noble'
+        type: choice
+        options:
+          - '"noble"'
+          - '"jammy"'
+          - '"focal"'
+          - '"trixie"'
+          - '"bookworm"'
+          - '"bullseye"'
+          - '"buster"'
+          - '"noble","jammy","focal","bookworm","bullseye"'
+
+jobs:
+  package:
+    runs-on: [self-hosted, linux, arm64]
+    container:
+      image: eggcold/debian-build
+      options: --user root --cap-add SYS_ADMIN --security-opt seccomp=unconfined --security-opt apparmor=unconfined
+    strategy:
+      matrix:
+        package: ${{ fromJSON(format('[{0}]', inputs.package)) }}
+        distro: ${{ fromJSON(format('[{0}]', inputs.distro)) }}
+      fail-fast: true
+      max-parallel: 1
+    steps:
+      - uses: actions/checkout@v3
+      - name: build with ${{ github.head_ref || github.ref_name }} branch
+        run: |
+            cp /root/.pbuilderrc $HOME/
+            cp D05deps $HOME/
+            cp B92test-pkg $HOME/
+            bash build.sh ${{ matrix.package }} ${{ matrix.distro }} arm64 --push
+        env:
+          BUILD_KEY: ${{ secrets.BUILD_KEY }}
+          version: ${{ inputs.version }}
+          revision: ${{ inputs.revision }}

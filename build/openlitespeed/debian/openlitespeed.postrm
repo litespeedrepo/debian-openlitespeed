@@ -1,0 +1,52 @@
+#!/bin/bash
+# postrm script for openlitespeed
+#
+# see: dh_installdeb(1)
+
+ FILES_TO_IGNORE=( \
+    '/usr/local/lsws/conf/httpd_config.conf' \
+    '/usr/local/lsws/conf/mime.properties' \
+    '/usr/local/lsws/conf/vhosts/Example/htgroup' \
+    '/usr/local/lsws/conf/vhosts/Example/htpasswd' \
+    '/usr/local/lsws/conf/vhosts/Example/vhconf.conf' \
+    '/usr/local/lsws/conf/templates/ccl.conf' \
+    '/usr/local/lsws/conf/templates/phpsuexec.conf' \
+    '/usr/local/lsws/conf/templates/rails.conf' \
+    '/usr/local/lsws/fcgi-bin/lsphp' \
+    '/usr/local/lsws/admin/conf/admin_config.conf' \
+    '/usr/local/lsws/admin/conf/htpasswd' \
+    '/usr/local/lsws/admin/conf/jcryption_keypair' \
+    '/usr/local/lsws/admin/conf/webadmin.crt' \
+    '/usr/local/lsws/admin/conf/webadmin.key' \
+    '/usr/local/lsws/Example/cgi-bin/helloworld' \
+    '/usr/local/lsws/Example/html/error404.html' \
+    '/usr/local/lsws/Example/html/index.html' \
+    '/usr/local/lsws/Example/html/.htaccess' \
+    '/usr/local/lsws/Example/html/phpinfo.php' \
+    '/usr/local/lsws/Example/html/upload.html' \
+    '/usr/local/lsws/Example/html/upload.php' \
+    '/usr/local/lsws/Example/html/blocked/index.html' \
+    '/usr/local/lsws/Example/html/css/bootstrap.min.css' \
+    '/usr/local/lsws/Example/html/css/custom.css' \
+    '/usr/local/lsws/Example/html/img/404-icon.png' \
+    '/usr/local/lsws/Example/html/img/blocked_content-icon.png' \
+    '/usr/local/lsws/Example/html/img/cgi-icon.png' \
+    '/usr/local/lsws/Example/html/img/file_upload-icon.png' \
+    '/usr/local/lsws/Example/html/img/olsws_logo.png' \
+    '/usr/local/lsws/Example/html/img/php-icon.png' \
+    '/usr/local/lsws/Example/html/img/powered_by_ols-new.png' \
+    '/usr/local/lsws/Example/html/img/pwd_protect-icon.png' \
+    '/usr/local/lsws/Example/html/protected/index.html' \
+    '/usr/local/lsws/Example/logs/access.log' \
+    '/usr/local/lsws/PLAT' \
+  )
+
+  for FILE_TO_IGNORE in "${FILES_TO_IGNORE[@]}"; do
+      /usr/bin/dpkg-divert --list | grep -q "${FILE_TO_IGNORE}"
+      if [[ "$?" -eq 0 ]]; then
+        /usr/bin/dpkg-divert --local --no-rename --remove "${FILE_TO_IGNORE}" >/dev/null 2>&1
+      fi
+  done
+
+
+exit 0

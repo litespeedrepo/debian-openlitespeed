@@ -1,0 +1,209 @@
+#!/bin/bash
+# postinst script for openlitespeed
+#
+# see: dh_installdeb(1)
+
+#set -ex
+
+#change file permissions
+#DIR_MOD=755
+#SDIR_MOD=700
+#EXEC_MOD=555
+#CONF_MOD=600
+#DOC_MOD=644
+	
+DEFAULT_USER="nobody"
+DEFAULT_GROUP="nogroup"
+
+grep -q nobody: "/etc/group"
+
+if  [ $? != 0 ] ; then
+    DEFAULT_GROUP="nogroup"
+fi
+
+WS_USER=$DEFAULT_USER
+WS_GROUP=$DEFAULT_GROUP
+
+OLD_USER=$DEFAULT_USER
+OLD_GROUP=$DEFAULT_GROUP
+
+ADMIN_USER="lsadm"
+LSWS_HOME="/usr/local/lsws"
+
+if [ -f "$LSWS_HOME/conf/httpd_config.conf" ] ; then
+    #Now check if the user and group match with the conf file
+    OLD_USER_CONF=`grep "user" "$LSWS_HOME/conf/httpd_config.conf"`
+    OLD_GROUP_CONF=`grep "group" "$LSWS_HOME/conf/httpd_config.conf"`
+    OLD_USER=`expr "$OLD_USER_CONF" : '\s*user\s*\(\S*\)'`
+    OLD_GROUP=`expr "$OLD_GROUP_CONF" : '\s*group\s*\(\S*\)'`
+fi
+
+WS_USER=$OLD_USER
+WS_GROUP=$OLD_GROUP
+
+DIR_OWN=$WS_USER:$WS_GROUP
+CONF_OWN=$WS_USER:$WS_GROUP
+LOGDIR_OWN="root:$WS_GROUP"
+
+grep "^lsadm:" /etc/passwd 1>/dev/null 2>&1
+if [ $? -eq 0 ]; then
+    CONF_OWN="lsadm:lsadm"
+fi
+
+SDIR_OWN="root:root"
+
+chown "$SDIR_OWN" "$LSWS_HOME" >/dev/null 2>&1
+
+chown "$CONF_OWN" -R "$LSWS_HOME/conf" >/dev/null 2>&1
+chown "$CONF_OWN" -R "$LSWS_HOME/phpbuild" >/dev/null 2>&1
+
+if [ -d "$LSWS_HOME/autoupdate" ]; then
+chown "$DIR_OWN" -R "$LSWS_HOME/autoupdate" >/dev/null 2>&1
+fi
+
+chmod 0755 "$LSWS_HOME/autoupdate" >/dev/null 2>&1
+
+if [ -d "$LSWS_HOME/DEFAULT/conf" ]; then
+chown "$CONF_OWN" -R "$LSWS_HOME/DEFAULT/conf" >/dev/null 2>&1
+fi
+
+if [ -d "$LSWS_HOME/Example/conf" ]; then
+chown "$CONF_OWN" -R "$LSWS_HOME/Example/conf" >/dev/null 2>&1
+fi
+
+chown "$CONF_OWN" -R "$LSWS_HOME/admin/conf" >/dev/null 2>&1
+chown "$CONF_OWN" -R "$LSWS_HOME/admin/tmp" >/dev/null 2>&1
+
+chgrp $WS_GROUP "$LSWS_HOME/admin/cgid" >/dev/null 2>&1
+chgrp $WS_GROUP "$LSWS_HOME/admin/tmp" >/dev/null 2>&1 
+
+chown  "$CONF_OWN" "$LSWS_HOME/admin/tmp/sess_*" 1>/dev/null 2>&1
+chown  "$DIR_OWN" "$LSWS_HOME/cachedata" >/dev/null 2>&1
+
+chown  "$DIR_OWN" "$LSWS_HOME/tmp/ocspcache" >/dev/null 2>&1
+
+chown "$SDIR_OWN" "$LSWS_HOME/fcgi-bin/lsphp" >/dev/null 2>&1
+chmod "$EXEC_MOD" "$LSWS_HOME/fcgi-bin/lsphp" >/dev/null 2>&1
+
+chown "$CONF_OWN" "$LSWS_HOME/admin/conf/jcryption_keypair" >/dev/null 2>&1
+chmod 0600 "$LSWS_HOME/admin/conf/jcryption_keypair" >/dev/null 2>&1
+
+chown "$CONF_OWN" "$LSWS_HOME/admin/conf/htpasswd" >/dev/null 2>&1
+chmod 0600 "$LSWS_HOME/admin/conf/htpasswd" >/dev/null 2>&1
+
+chown "$LOGDIR_OWN" "$LSWS_HOME/logs" "$LSWS_HOME/admin/logs" >/dev/null 2>&1
+chmod 0750 "$LSWS_HOME/logs" "$LSWS_HOME/admin/logs" >/dev/null 2>&1 
+
+#end of changing file permissions
+
+SSL_COUNTRY='US'
+SSL_STATE="New Jersey"
+SSL_LOCALITY='Virtual'
+SSL_ORG='LiteSpeedCommunity'
+SSL_ORGUNIT='Testing'
+SSL_HOSTNAME='webadmin'
+COMMNAME='openlitespeed.host'
+SSL_COUNTRY=US
+SSL_STATE="New Jersey"
+csr="${SSL_HOSTNAME}.csr"
+key="${SSL_HOSTNAME}.key"
+cert="${SSL_HOSTNAME}.crt"
+
+sslcert=/usr/local/lsws/admin/conf/${cert}
+sslkey=/usr/local/lsws/admin/conf/${key}
+
+cat << EOF > ${csr}
+[req]
+prompt=no
+distinguished_name=openlitespeed
+[openlitespeed]
+commonName = ${COMMNAME}
+countryName = ${SSL_COUNTRY}
+localityName = Virtual
+organizationName = LiteSpeedCommunity
+organizationalUnitName = Testing
+stateOrProvinceName = NJ
+emailAddress = mail@${COMMNAME}
+name = openlitespeed
+initials = CP
+dnQualifier = openlitespeed
+[server_exts]
+extendedKeyUsage=1.3.6.1.5.5.7.3.1
+EOF
+
+if [ ! -f ${sslcert} ]; then
+openssl req -x509 -config $csr -extensions 'server_exts' -nodes -days 820 -newkey rsa:2048 -keyout $sslkey -out $sslcert 2>/dev/null
+chown lsadm:lsadm $sslcert; chmod 400 $sslcert;
+chown lsadm:lsadm $sslkey; chmod 400 $sslkey;
+fi
+
+# echo "lsws service set to auto start"
+/usr/local/lsws/admin/misc/rc-inst.sh >/dev/null 2>&1
+
+# echo "now start lsws"
+#/usr/local/lsws/bin/lswsctrl start >/dev/null 2>&1
+
+if [ -e /etc/systemd/system ] || [ -e /usr/lib/systemd/system ] || [ -e /lib/systemd/system ] ; then
+  systemctl status lsws > /dev/null 2>&1
+  if [ $? -eq 3 ] ; then
+    /usr/local/lsws/bin/lswsctrl stop > /dev/null 2>&1
+  fi
+  systemctl restart lsws > /dev/null 2>&1
+else
+  service lsws restart >/dev/null 2>&1 || :
+fi
+
+# Cleanup .dpkg files that match the currently installed ones
+if [[ "$1" == 'configure' ]]; then
+  FILES_TO_IGNORE=(
+    '/usr/local/lsws/conf/httpd_config.conf'
+    '/usr/local/lsws/conf/mime.properties'
+    '/usr/local/lsws/conf/vhosts/Example/htgroup'
+    '/usr/local/lsws/conf/vhosts/Example/htpasswd'
+    '/usr/local/lsws/conf/vhosts/Example/vhconf.conf'
+    '/usr/local/lsws/conf/templates/ccl.conf'
+    '/usr/local/lsws/conf/templates/phpsuexec.conf'
+    '/usr/local/lsws/conf/templates/rails.conf'
+    '/usr/local/lsws/fcgi-bin/lsphp'
+    '/usr/local/lsws/admin/conf/admin_config.conf'
+    '/usr/local/lsws/admin/conf/htpasswd'
+    '/usr/local/lsws/admin/conf/jcryption_keypair'
+    '/usr/local/lsws/admin/conf/webadmin.crt'
+    '/usr/local/lsws/admin/conf/webadmin.key'
+    '/usr/local/lsws/Example/cgi-bin/helloworld'
+    '/usr/local/lsws/Example/html/error404.html'
+    '/usr/local/lsws/Example/html/index.html'
+    '/usr/local/lsws/Example/html/phpinfo.php'
+    '/usr/local/lsws/Example/html/upload.html'
+    '/usr/local/lsws/Example/html/upload.php'
+    '/usr/local/lsws/Example/html/blocked/index.html'
+    '/usr/local/lsws/Example/html/css/bootstrap.min.css'
+    '/usr/local/lsws/Example/html/css/custom.css'
+    '/usr/local/lsws/Example/html/img/404-icon.png'
+    '/usr/local/lsws/Example/html/img/blocked_content-icon.png'
+    '/usr/local/lsws/Example/html/img/cgi-icon.png'
+    '/usr/local/lsws/Example/html/img/file_upload-icon.png'
+    '/usr/local/lsws/Example/html/img/olsws_logo.png'
+    '/usr/local/lsws/Example/html/img/php-icon.png'
+    '/usr/local/lsws/Example/html/img/powered_by_ols-new.png'
+    '/usr/local/lsws/Example/html/img/pwd_protect-icon.png'
+    '/usr/local/lsws/Example/html/protected/index.html'
+    '/usr/local/lsws/Example/logs/access.log'
+  )
+
+  for FILE_TO_IGNORE in ${FILES_TO_IGNORE[@]}; do
+    if [[ -f "${FILE_TO_IGNORE}.dpkg" ]]; then
+      MD5_OLD=$(/usr/bin/md5sum ${FILE_TO_IGNORE} | awk '{print $1}')
+      MD5_NEW=$(/usr/bin/md5sum ${FILE_TO_IGNORE}.dpkg | awk '{print $1}')
+      if [[ "${MD5_OLD}" == "${MD5_NEW}" ]]; then
+        /bin/rm -rf "${FILE_TO_IGNORE}.dpkg"
+      fi
+    fi
+  done
+fi
+
+# dh_installdeb will replace this with shell code automatically
+# generated by other debhelper scripts.
+
+
+exit 0

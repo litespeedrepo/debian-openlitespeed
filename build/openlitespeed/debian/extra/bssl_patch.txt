@@ -1,0 +1,66 @@
+diff --git a/include/openssl/ssl.h b/include/openssl/ssl.h
+index 0d5a444d..422e56e3 100644
+--- a/include/openssl/ssl.h
++++ b/include/openssl/ssl.h                            
+@@ -3237,6 +3237,11 @@ OPENSSL_EXPORT int SSL_get_ivs(const SSL *ssl, const uint8_t **out_read_iv,
+                                const uint8_t **out_write_iv,
+                                size_t *out_iv_len);
+
++OPENSSL_EXPORT EVP_AEAD_CTX *SSL_get_write_aead_ctx(SSL *ssl);
++OPENSSL_EXPORT const uint8_t *SSL_get_write_iv_sequence(SSL *ssl,
++                                                        uint8_t **sequence,
++                                                       char *noad);
++
+ // SSL_get_key_block_len returns the length of |ssl|'s key block.
+ OPENSSL_EXPORT size_t SSL_get_key_block_len(const SSL *ssl);
+
+diff --git a/ssl/internal.h b/ssl/internal.h
+index 0535b8de..d767294f 100644
+--- a/ssl/internal.h
++++ b/ssl/internal.h
+@@ -741,7 +741,11 @@ class SSLAEADContext {
+
+   bool GetIV(const uint8_t **out_iv, size_t *out_iv_len) const;
+
+- private:
++  EVP_AEAD_CTX *Get_evp_aead_ctx() { return ctx_.get(); }
++  const uint8_t *Get_fixed_nonce() const { return fixed_nonce_; }
++  bool is_omit_ad() const { return omit_ad_; }
++
++private:
+   // GetAdditionalData returns the additional data, writing into |storage| if
+   // necessary.
+   Span<const uint8_t> GetAdditionalData(uint8_t storage[13], uint8_t type,
+diff --git a/ssl/ssl_aead_ctx.cc b/ssl/ssl_aead_ctx.cc
+index 335f6f48..22f990dd 100644
+--- a/ssl/ssl_aead_ctx.cc
++++ b/ssl/ssl_aead_ctx.cc
+@@ -433,4 +433,5 @@ bool SSLAEADContext::GetIV(const uint8_t **out_iv, size_t *out_iv_len) const {
+          EVP_AEAD_CTX_get_iv(ctx_.get(), out_iv, out_iv_len);
+ }
+
++
+ BSSL_NAMESPACE_END
+diff --git a/ssl/ssl_lib.cc b/ssl/ssl_lib.cc
+index 13b9cacc..e912aa96 100644
+--- a/ssl/ssl_lib.cc
++++ b/ssl/ssl_lib.cc
+@@ -2546,6 +2546,18 @@ int SSL_get_ivs(const SSL *ssl, const uint8_t **out_read_iv,
+   return 1;
+ }
+
++EVP_AEAD_CTX *SSL_get_write_aead_ctx(SSL *ssl)
++{
++  return ssl->s3->aead_write_ctx.get()->Get_evp_aead_ctx();
++}
++
++const uint8_t *SSL_get_write_iv_sequence(SSL *ssl, uint8_t **sequence, char *noad)
++{
++  *noad = ssl->s3->aead_write_ctx.get()->is_omit_ad();
++  *sequence = ssl->s3->write_sequence;
++  return ssl->s3->aead_write_ctx.get()->Get_fixed_nonce();
++}
++
+ static uint64_t be_to_u64(const uint8_t in[8]) {
+   return (((uint64_t)in[0]) << 56) | (((uint64_t)in[1]) << 48) |
+          (((uint64_t)in[2]) << 40) | (((uint64_t)in[3]) << 32) |
