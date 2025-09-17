@@ -30,7 +30,7 @@ Description:  High Performance, lightweight, open source HTTP server
  OpenLiteSpeed Web Server is developed and copyrighted by LiteSpeed Technologies.
 
 Package: ols-pagespeed
-Architecture: any
+Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends},
 	openlitespeed (>= #VERSION#-#BUILD#+#DIST#)
 Description:  High Performance, lightweight, open source HTTP server
