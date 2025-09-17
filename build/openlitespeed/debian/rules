@@ -1,59 +1,17 @@
 #!/usr/bin/make -f
-# See debhelper(7) (uncomment to enable)
-# output every command that modifies files on the build system.
 DH_VERBOSE = 1
 export DH_OPTIONS=-v
 
-# see EXAMPLES in dpkg-buildflags(1) and read /usr/share/dpkg/*
 DPKG_EXPORT_BUILDFLAGS = 1
 include /usr/share/dpkg/default.mk
 
-# see FEATURE AREAS in dpkg-buildflags(1)
-#export DEB_BUILD_MAINT_OPTIONS = hardening=+all
-
-# see ENVIRONMENT in dpkg-buildflags(1)
-# package maintainers to append CFLAGS
-#export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
-# package maintainers to append LDFLAGS
-#export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
-
-
-# main packaging script based on dh7 syntax
 %:
 	dh $@  --with autotools-dev
 
-# debmake generated override targets
-# This is example for Cmake (See http://bugs.debian.org/641051 )
-#override_dh_auto_configure:
-#	dh_auto_configure -- \
-#	-DCMAKE_LIBRARY_PATH=$(DEB_HOST_MULTIARCH)
-
 BUILD_ROOT=$(shell pwd)
-
-############################################################################################
-
-#			#dh clean sequence#
-			
-#override_dh_testdir:
-#override_dh_autoclean:
-#override_dh_clean:
-
-############################################################################################
-
-#			#dh build sequence#
-			
-#override_dh_testdir:
 override_dh_auto_configure:
-
 override_dh_auto_build:
 override_dh_auto_test:
-
-############################################################################################
-
-#			#dh binary sequence: both binary-arch & binary-indep
-#			#binary-arch using -a option, binary-indep using -i option
-			
-#override_dh_testroot:
 override_dh_prep:
 override_dh_installdirs:
 override_dh_auto_install:
@@ -70,38 +28,34 @@ override_dh_auto_install:
 	./install.sh $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws	
 	
 	# Move the modules to correct path/package
-	mkdir -p $(BUILD_ROOT)/debian/ols-pagespeed/usr/local/lsws/modules/
-	mv $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/modules/modpagespeed.so $(BUILD_ROOT)/debian/ols-pagespeed/usr/local/lsws/modules/
+	MOD_SRC="$(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/modules/modpagespeed.so"
+	MOD_DIR="$(BUILD_ROOT)/debian/ols-pagespeed"
+	MOD_DST="$$MOD_DIR/usr/local/lsws/modules/"
+	if [ -f "$$MOD_SRC" ]; then \
+		mkdir -p "$$MOD_DST"; \
+		mv "$$MOD_SRC" "$$MOD_DST"; \
+	else \
+		echo "Skipping ols-pagespeed because modpagespeed.so not found"; \
+	fi
 	mkdir -p $(BUILD_ROOT)/debian/ols-modsecurity/usr/local/lsws/modules/
 	mv $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/modules/mod_security.so $(BUILD_ROOT)/debian/ols-modsecurity/usr/local/lsws/modules/
-	
 	# Have Default PHP be 83 and have admin panel run php 83 with 83 modules
 	sed -i -e 's:fcgi-bin/lsphp:lsphp83/bin/lsphp:g' $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/conf/httpd_config.conf
 	sed -i -e 's|extension_dir = ./|extension_dir = /usr/local/lsws/lsphp83/lib/php/20230831|g' $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/conf/php.ini
-
 	# Fix admpass.sh for 24.04
 	sed -i -e 's|admin_php|admin_php -c /usr/local/lsws/admin/conf/php.ini|g' $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/misc/admpass.sh
-
 	# Fix admin_config.xml for SSL
 	rm -f $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/conf/admin_config.conf
 	cp -pr admin/conf/admin_config_ssl.conf.in $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/conf/admin_config.conf
 	sed -i -e "s:%ADMIN_PORT%:7080:g" $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/conf/admin_config.conf
 	sed -i -e "s:%SSL_HOSTNAME%:webadmin:g" $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/conf/admin_config.conf
-
 	#Fix .rc files for proper permissions and path
 	chmod u+w $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/misc/lsws.rc
 	sed "s:%LSWS_CTRL%:/usr/local/lsws/bin/lswsctrl:" admin/misc/lsws.rc.in > $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/misc/lsws.rc
 	chmod u+w $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/misc/lsws.rc.gentoo
 	sed "s:%LSWS_CTRL%:/usr/local/lsws/bin/lswsctrl:" admin/misc/lsws.rc.gentoo.in > $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/misc/lsws.rc.gentoo
-	#chmod u+w $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/misc/lshttpd.service
-	#sed "s:%LSWS_CTRL%:/usr/local/lsws/bin/lswsctrl:" admin/misc/lshttpd.service.in $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/misc/lshttpd.service
 	sed -i -e 's:-e $${path}/$${AP_PROC}.service:true:g' $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/misc/rc-inst.sh
-	#sed -i -e 's:&& [ -e $${path}/$${AP_PROC}.service ]: :g' $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/misc/rc-inst.sh
 	sed -i -e 's:cp -f $${CURDIR}/lshttpd.service $${SYSTEMDDIR}/lshttpd.service:cp -f $${CURDIR}/lshttpd.service $${SYSTEMDDIR}/lshttpd.service\n ln -sf $${SYSTEMDDIR}/lshttpd.service $${SYSTEMDDIR}/lsws.service:g' $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/misc/rc-inst.sh
-	#grep -Rin '.service' $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/misc/rc-inst.sh
-	#cat $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/misc/rc-inst.sh
-	#exit 1
-
 	echo 'DEB' > $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/PLAT
 
 override_dh_install:
@@ -119,49 +73,4 @@ override_dh_installchangelogs:
 	install -o 0 -g 0 -p -m644 debian/changelog debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed/changelog.Debian
 
 override_dh_strip_nondeterminism:
-#override_dh_installexamples:
-#override_dh_installman:
-#override_dh_installcatalogs:
-#override_dh_installcron:
-#override_dh_installdebconf:
-#override_dh_installemacsen:
-#override_dh_installifupdown:
-#override_dh_installinfo:
-#override_dh_installinit:
-#override_dh_installmenu:
-
-#override_dh_installmime:
-#override_dh_installmodules:
-#override_dh_installlogcheck:
-#override_dh_installlogrotate:
-#override_dh_installpam:
-#override_dh_installppp:
-#override_dh_installudev:
-#override_dh_installwm:
-#override_dh_installxfonts:
-
-#override_dh_bugfiles:
-#override_dh_lintian:
-#override_dh_gconf:
-#override_dh_icons:
-
-#override_dh_perl:
 override_dh_usrlocal:
-#override_dh_link:
-
-#override_dh_compress:
-#override_dh_fixperms:
-
-#the following 3 steps are for binary-arch only
-####################
-#override_dh_strip:
-#override_dh_makeshlibs:
-#override_dh_shlibdeps:
-#####################
-
-#override_dh_installdeb:
-#override_dh_gencontrol:
-#override_dh_md5sums:
-#override_dh_builddeb:
-
-#			#end of binary sequence#
