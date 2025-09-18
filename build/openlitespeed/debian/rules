@@ -62,17 +62,16 @@ override_dh_install:
 	dh_install
 	rm -f debian/openlitespeed/usr/local/lsws/adminpasswd
 override_dh_installdocs:
-	install -g 0 -o 0 -d debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed
+	mkdir -p $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed
+	chmod u+w $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed
 	cp -a GPL.txt debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed
-	#cp -a README.md debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed
-	chown -R 0:0 debian/openlitespeed/usr/local/lsws/share/doc
-	chmod -R go=rX debian/openlitespeed/usr/local/lsws/share/doc
-	chmod -R u\+rw debian/openlitespeed/usr/local/lsws/share/doc
-	install -g 0 -o 0 -m 644 -p debian/README.Debian debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed/README.Debian
-	install -g 0 -o 0 -m 644 -p debian/copyright debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed/copyright
+	cp debian/README.Debian debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed/README.Debian
+	cp debian/copyright debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed/copyright
 
 override_dh_installchangelogs:
-	install -o 0 -g 0 -p -m644 debian/changelog debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed/changelog.Debian
+	cp debian/changelog debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed/changelog.Debian
+	chmod -R go=rX debian/openlitespeed/usr/local/lsws/share/doc
+	chmod -R u\+rw debian/openlitespeed/usr/local/lsws/share/doc
 
 override_dh_strip_nondeterminism:
 override_dh_usrlocal:
