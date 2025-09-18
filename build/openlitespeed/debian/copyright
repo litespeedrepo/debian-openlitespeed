@@ -3,11 +3,11 @@ Upstream-Name: openlitespeed
 Source: <http://open.litespeedtech.com/packages/openlitespeed-1.4.13.tgz>
 
 Files: *
-Copyright: 2013-2015 LiteSpeed Technologies, Inc <info@litespeedtech.com>
+Copyright: 2013-2025 LiteSpeed Technologies, Inc <info@litespeedtech.com>
 License: GPL-3.0+
 
 Files: debian/*
-Copyright: 2015 lsadm <info@litespeedtech.com>
+Copyright: 2025 support <info@litespeedtech.com>
 License: GPL-3.0+
 
 License: GPL-3.0+

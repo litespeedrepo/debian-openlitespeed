@@ -11,7 +11,7 @@
 #                    <...>
 ### END INIT INFO
 
-# Author: Long Hu <lhu@litespeedtech.com>
+# Author: Support <support@litespeedtech.com>
 
 # Do NOT "set -e"
 

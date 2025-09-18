@@ -8,8 +8,8 @@ Build-Depends:  debhelper (>= 9),
 		libexpat | libexpat1,
 		libexpat-dev | libexpat1-dev,
 		lsphp83,
-                lsphp83-common,
-                lsphp83-mysql,
+        lsphp83-common,
+        lsphp83-mysql,
 		ca-certificates
 Standards-Version: 3.9.5
 Homepage: https://openlitespeed.org/

@@ -59,6 +59,8 @@ override_dh_auto_install:
 	echo 'DEB' > $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/PLAT
 
 override_dh_install:
+	dh_install
+	rm -f debian/openlitespeed/usr/local/lsws/adminpasswd
 override_dh_installdocs:
 	install -g 0 -o 0 -d debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed
 	cp -a GPL.txt debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed
