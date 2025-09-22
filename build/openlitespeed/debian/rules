@@ -31,9 +31,9 @@ override_dh_auto_install:
 	MOD_SRC="$(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/modules/modpagespeed.so"
 	MOD_DIR="$(BUILD_ROOT)/debian/ols-pagespeed"
 	MOD_DST="$$MOD_DIR/usr/local/lsws/modules/"
-	if [ -f "$$MOD_SRC" ]; then \
-		mkdir -p "$$MOD_DST"; \
-		mv "$$MOD_SRC" "$$MOD_DST"; \
+	if [ -f "$(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/modules/modpagespeed.so" ]; then \
+		mkdir -p "$(BUILD_ROOT)/debian/ols-pagespeed"; \
+		mv "$(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/modules/modpagespeed.so" "$(BUILD_ROOT)/debian/ols-pagespeed"; \
 	else \
 		echo "Skipping ols-pagespeed because modpagespeed.so not found"; \
 	fi
