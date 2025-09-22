@@ -202,14 +202,19 @@ if [[ "$1" == 'configure' ]]; then
   done
   PASSFILE="$LSWS_HOME/adminpasswd"
   HTPASSWD="$LSWS_HOME/admin/conf/htpasswd"
-  ADMIN_PASS=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 ; echo '')
-  ENCRYPT_PASS=$("$LSWS_HOME/admin/fcgi-bin/admin_php" -q "$LSWS_HOME/admin/misc/htpasswd.php" "$ADMIN_PASS")
-
-  echo "admin:${ENCRYPT_PASS}" > "$HTPASSWD"
-  chmod 600 "$HTPASSWD"
-  echo "WebAdmin user/password is admin/$ADMIN_PASS" > "$PASSFILE"
-  chmod 600 "$PASSFILE"
-  echo "WebAdmin user/password is admin/$ADMIN_PASS"
+  if [ ! -f "$PASSFILE" ]; then
+    ADMIN_PASS=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 ; echo '')
+    ENCRYPT_PASS=$("$LSWS_HOME/admin/fcgi-bin/admin_php" -q "$LSWS_HOME/admin/misc/htpasswd.php" "$ADMIN_PASS")
+    if grep -q '^admin:' "$HTPASSWD" 2>/dev/null; then
+        sed -i "s|^admin:.*|admin:${ENCRYPT_PASS}|" "$HTPASSWD"
+    else
+        echo "admin:${ENCRYPT_PASS}" >> "$HTPASSWD"
+    fi
+    chmod 600 "$HTPASSWD"
+    echo "WebAdmin user/password is admin/$ADMIN_PASS" > "$PASSFILE"
+    chmod 600 "$PASSFILE"
+    echo "WebAdmin user/password is admin/$ADMIN_PASS"
+  fi
 fi
 
 exit 0
