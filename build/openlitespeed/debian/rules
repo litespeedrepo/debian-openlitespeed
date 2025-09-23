@@ -60,7 +60,7 @@ override_dh_auto_install:
 
 override_dh_install:
 	dh_install
-	rm -f debian/openlitespeed/usr/local/lsws/adminpasswd
+	# rm -f debian/openlitespeed/usr/local/lsws/adminpasswd
 override_dh_installdocs:
 	mkdir -p $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed
 	chmod u+w $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/share/doc/openlitespeed
