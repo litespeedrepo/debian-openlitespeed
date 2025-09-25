@@ -8,8 +8,8 @@ dists=$2
 input_archs=$3
 PUSH_FLAG='OFF'
 lsapi_version=8.2
-version=
-revision=
+#version=
+#revision=
 
 source ./functions.sh #2>/dev/null
 if [ $(id -u) != "0" ]; then
