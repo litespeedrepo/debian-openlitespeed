@@ -25,9 +25,10 @@ override_dh_auto_install:
 	#sed -i -e 's:./_in.sh:./openlitespeed/_in.sh:g' openlitespeed/install.sh
 	#sed -i -e 's:cp bin:cp openlitespeed/bin:g' openlitespeed/install.sh
 	sed -i -e 's|s:%LSWS_CTRL%:$$LSWS_HOME/bin/lswsctrl:|s:%LSWS_CTRL%:/usr/local/lsws/bin/lswsctrl:|g' functions.sh
+	mkdir -p $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/conf/
+	touch $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/adminpasswd 
+	touch $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/conf/htpasswd	
 	./install.sh $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws	
-	rm -f $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/adminpasswd 
-	rm -f $(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/admin/conf/htpasswd
 	# Move the modules to correct path/package
 	MOD_SRC="$(BUILD_ROOT)/debian/openlitespeed/usr/local/lsws/modules/modpagespeed.so"
 	MOD_DIR="$(BUILD_ROOT)/debian/ols-pagespeed"
