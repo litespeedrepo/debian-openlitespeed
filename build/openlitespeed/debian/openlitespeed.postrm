@@ -12,6 +12,7 @@
     '/usr/local/lsws/conf/templates/ccl.conf' \
     '/usr/local/lsws/conf/templates/phpsuexec.conf' \
     '/usr/local/lsws/conf/templates/rails.conf' \
+    '/usr/local/lsws/adminpasswd' \
     '/usr/local/lsws/fcgi-bin/lsphp' \
     '/usr/local/lsws/admin/conf/admin_config.conf' \
     '/usr/local/lsws/admin/conf/htpasswd' \
