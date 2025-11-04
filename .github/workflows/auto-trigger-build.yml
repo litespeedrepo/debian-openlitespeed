@@ -1,0 +1,108 @@
+name: Auto-trigger build on version bump
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - VERSION.txt
+
+jobs:
+  detect-and-trigger:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed versions
+        id: detect
+        run: |
+          echo "Reading VERSION.txt..."
+          OLD_CONTENT=$(git show ${{ github.event.before }}:VERSION.txt 2>/dev/null || true)
+          NEW_CONTENT=$(cat VERSION.txt)
+
+          echo "$OLD_CONTENT" | sort > old.txt
+          echo "$NEW_CONTENT" | sort > new.txt
+
+          DIFF=$(diff -U0 old.txt new.txt 2>/dev/null | grep -E "^\+" | grep -vE "^(---|\+\+\+)" || true)
+          if [ -z "$DIFF" ]; then
+            echo "No version changes detected (order-only change ignored)."
+            exit 0
+          fi
+
+          NEW_LINES=$(echo "$DIFF" | cut -c2-)
+          echo "NEW_LINES:"
+          echo "$NEW_LINES"
+
+          CHANGED_PKGS=()
+          while IFS= read -r line; do
+            NAME=${line%%=*}
+            VER=${line#*=}
+            OLD_VER=$(echo "$OLD_CONTENT" | grep "^$NAME=" | cut -d'=' -f2 || echo "")
+            if [[ "$OLD_VER" != "" ]] && dpkg --compare-versions "$VER" lt "$OLD_VER"; then
+              echo "Skipping downgrade for $NAME ($OLD_VER -> $VER)"
+              continue
+            fi
+            if [[ "$VER" != "$OLD_VER" ]]; then
+              CHANGED_PKGS+=("$NAME=$VER")
+            fi
+          done <<< "$NEW_LINES"
+
+          if [ ${#CHANGED_PKGS[@]} -eq 0 ]; then
+            echo "No valid version upgrades detected."
+            exit 0
+          fi
+          echo "CHANGED_PKGS=${CHANGED_PKGS[*]}" >> $GITHUB_ENV
+          echo "Detected package updates: ${CHANGED_PKGS[*]}"
+
+      - name: Trigger AMD64  builds for all changed packages
+        if: env.CHANGED_PKGS != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DISTROS="\"noble\",\"jammy\",\"focal\",\"trixie\",\"bookworm\",\"bullseye\""
+          TARGET_WORKFLOW=".github/workflows/self-host-amd-build.yml"
+          if ! gh api repos/${{ github.repository }}/contents/${TARGET_WORKFLOW} --jq '.path' &>/dev/null; then
+            echo "Workflow ${TARGET_WORKFLOW} not found. Skipping AMD64 build triggers."
+            exit 0
+          fi
+
+          for pkg_ver in ${{ env.CHANGED_PKGS }}; do
+            PKG=$(echo "$pkg_ver" | cut -d'=' -f1)
+            VER=$(echo "$pkg_ver" | cut -d'=' -f2)
+            echo "Triggering amd build for $PKG version $VER"
+            gh workflow run self-host-amd-build.yml \
+              --ref ${{ github.ref_name }} \
+              -f package="\"$PKG\"" \
+              -f distro="$DISTROS" \
+              || echo "Failed to trigger $PKG"
+          done
+
+      - name: Trigger ARM64 builds for all changed packages
+        if: env.CHANGED_PKGS != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DISTROS="\"noble\",\"jammy\",\"focal\",\"trixie\",\"bookworm\",\"bullseye\""
+          TARGET_WORKFLOW=".github/workflows/self-host-arm-build.yml"
+          if ! gh api repos/${{ github.repository }}/contents/${TARGET_WORKFLOW} --jq '.path' &>/dev/null; then
+            echo "Workflow ${TARGET_WORKFLOW} not found. Skipping ARM64 build triggers."
+            exit 0
+          fi          
+          for pkg_ver in ${{ env.CHANGED_PKGS }}; do
+            PKG=$(echo "$pkg_ver" | cut -d'=' -f1)
+            VER=$(echo "$pkg_ver" | cut -d'=' -f2)
+            echo "Triggering arm build for $PKG version $VER"
+            gh workflow run self-host-arm-build.yml \
+              --ref ${{ github.ref_name }} \
+              -f package="\"$PKG\"" \
+              -f distro="$DISTROS" \
+              || echo "Failed to trigger $PKG"
+            sleep 1500  
+          done
