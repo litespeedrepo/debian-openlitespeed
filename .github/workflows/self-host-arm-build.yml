@@ -21,6 +21,7 @@ on:
         default: 'noble'
         type: choice
         options:
+          - '"resolute"'
           - '"noble"'
           - '"jammy"'
           - '"focal"'
@@ -29,7 +30,7 @@ on:
           - '"bullseye"'
           - '"noble","jammy","focal"'
           - '"trixie","bookworm","bullseye"'          
-          - '"noble","jammy","focal","trixie","bookworm","bullseye"'
+          - '"resolute","noble","jammy","trixie","bookworm","bullseye"'
 
 jobs:
   package:
