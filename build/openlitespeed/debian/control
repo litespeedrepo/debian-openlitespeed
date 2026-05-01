@@ -20,7 +20,6 @@ Package: openlitespeed
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends},
 		rcs,
-		libxml2,
 		openssl,
 		libexpat | libexpat1,
 		lsphp83,
