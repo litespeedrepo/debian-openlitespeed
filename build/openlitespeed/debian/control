@@ -26,6 +26,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends},
 		lsphp83,
 		lsphp83-common,
 		lsphp83-mysql,
+Recommends: libxml2 | libxml2-16		
 Description:  High Performance, lightweight, open source HTTP server
  OpenLiteSpeed Web Server is developed and copyrighted by LiteSpeed Technologies.
 
