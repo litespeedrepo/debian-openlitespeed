@@ -34,8 +34,8 @@ if [ -f "$LSWS_HOME/conf/httpd_config.conf" ] ; then
     #Now check if the user and group match with the conf file
     OLD_USER_CONF=`grep "user" "$LSWS_HOME/conf/httpd_config.conf"`
     OLD_GROUP_CONF=`grep "group" "$LSWS_HOME/conf/httpd_config.conf"`
-    OLD_USER=`expr "$OLD_USER_CONF" : '\s*user\s*\(\S*\)'`
-    OLD_GROUP=`expr "$OLD_GROUP_CONF" : '\s*group\s*\(\S*\)'`
+    OLD_USER=$(echo "$OLD_USER_CONF" | awk '/user/ {print $2}')
+    OLD_GROUP=$(echo "$OLD_GROUP_CONF" | awk '/group/ {print $2}')
 fi
 
 WS_USER=$OLD_USER
