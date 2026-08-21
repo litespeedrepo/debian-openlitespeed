@@ -29,10 +29,10 @@ show_help()
     echo -e "\033[1mOPTIONS\033[0m"
     echow '--version [NUMBER]'
     echo "${EPACE}${EPACE}Specify package version number"
-    echo "${EPACE}${EPACE}Example: ./build.sh openlitespeed noble amd64 --version 1.8.4"
+    echo "${EPACE}${EPACE}Example: ./build.sh openlitespeed noble amd64 --version 1.9.1"
     echow '--revision [NUMBER]'
     echo "${EPACE}${EPACE}Specify package revision number"
-    echo "${EPACE}${EPACE}Example: ./build.sh openlitespeed noble amd64 --version 1.8.4 --revision 5"
+    echo "${EPACE}${EPACE}Example: ./build.sh openlitespeed noble amd64 --version 1.9.1 --revision 5"
     echow '--push-flag'
     echo "${EPACE}${EPACE}Push packages to dev server"
     echo "${EPACE}${EPACE}Example: ./build.sh openlitespeed noble amd64 --push-flag"

@@ -1,1 +1,1 @@
-openlitespeed=1.9.2
+openlitespeed=1.9.1
