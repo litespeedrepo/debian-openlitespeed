@@ -28,7 +28,7 @@ on:
           - '"trixie"'
           - '"bookworm"'
           - '"bullseye"'
-          - '"noble","jammy","focal"'
+          - '"resolute","noble","jammy"'
           - '"trixie","bookworm","bullseye"'          
           - '"resolute","noble","jammy","trixie","bookworm","bullseye"'
 
