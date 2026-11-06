@@ -192,7 +192,7 @@ if [[ "$1" == 'configure' ]]; then
   )
 
   for FILE_TO_IGNORE in ${FILES_TO_IGNORE[@]}; do
-    if [[ -f "${FILE_TO_IGNORE}.dpkg" ]]; then
+    if [[ -f "${FILE_TO_IGNORE}" && -f "${FILE_TO_IGNORE}.dpkg" ]]; then
       MD5_OLD=$(/usr/bin/md5sum ${FILE_TO_IGNORE} | awk '{print $1}')
       MD5_NEW=$(/usr/bin/md5sum ${FILE_TO_IGNORE}.dpkg | awk '{print $1}')
       if [[ "${MD5_OLD}" == "${MD5_NEW}" ]]; then
